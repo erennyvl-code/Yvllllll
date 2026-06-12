@@ -1,4 +1,4 @@
-# Muzo — Premium Music Client
+# yvl — Premium Music Client
 
 <p align="center">
   <img src="assets/logo.png" alt="Muzo Logo" width="150" height="150" />
