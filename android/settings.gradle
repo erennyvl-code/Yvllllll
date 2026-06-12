@@ -1,0 +1,19 @@
+// Added by GitHub Copilot to set the Kotlin Gradle Plugin version for CI builds.
+// This helps resolve failure: "Kotlin Gradle Plugin version is not specified" during Gradle assemble.
+
+pluginManagement {
+  repositories {
+    google()
+    mavenCentral()
+    gradlePluginPortal()
+  }
+  plugins {
+    // Set an explicit Kotlin Gradle Plugin version compatible with Flutter stable
+    id 'org.jetbrains.kotlin.android' version '1.8.22' apply false
+  }
+}
+
+// Keep existing project includes. If your project already had a settings.gradle file,
+// this file may need to be merged manually to avoid duplicate includes.
+rootProject.name = 'Yvllllll'
+include ':app'
