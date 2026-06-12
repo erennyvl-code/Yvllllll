@@ -1,13 +1,13 @@
+// android/build.gradle.kts — make script safe and add AGP/Kotlin classpath
 buildscript {
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        // Provide the Kotlin Gradle plugin on the classpath so Kotlin types are available
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22")
-        // Android Gradle Plugin compatible with Gradle 8.1.x
+        // Android Gradle Plugin (AGP) and Kotlin Gradle Plugin on the buildscript classpath
         classpath("com.android.tools.build:gradle:8.1.1")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22")
     }
 }
 
@@ -18,6 +18,7 @@ allprojects {
     }
 }
 
+// move project build outputs outside android/ to top-level build
 val newBuildDir: Directory =
     rootProject.layout.buildDirectory
         .dir("../../build")
@@ -28,21 +29,33 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+
 subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// Use guarded plugin configuration so types are only accessed when plugin is applied
 subprojects {
     afterEvaluate {
-        if (plugins.hasPlugin("com.android.application") || plugins.hasPlugin("com.android.library")) {
-            extensions.configure<com.android.build.gradle.BaseExtension> {
+        plugins.withId("com.android.application") {
+            extensions.findByType(com.android.build.gradle.BaseExtension::class.java)?.apply {
                 compileOptions {
                     sourceCompatibility = JavaVersion.VERSION_17
                     targetCompatibility = JavaVersion.VERSION_17
                 }
             }
         }
-        tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        plugins.withId("com.android.library") {
+            extensions.findByType(com.android.build.gradle.BaseExtension::class.java)?.apply {
+                compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
+                }
+            }
+        }
+
+        // Configure Kotlin compile tasks (guarded)
+        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).configureEach {
             kotlinOptions {
                 jvmTarget = "17"
             }
