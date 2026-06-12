@@ -1,11 +1,10 @@
-// android/build.gradle.kts — make script safe and add AGP/Kotlin classpath
 buildscript {
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        // Android Gradle Plugin (AGP) and Kotlin Gradle Plugin on the buildscript classpath
+        // Android Gradle Plugin and Kotlin Gradle Plugin on the buildscript classpath
         classpath("com.android.tools.build:gradle:8.1.1")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22")
     }
@@ -18,25 +17,13 @@ allprojects {
     }
 }
 
-// move project build outputs outside android/ to top-level build
-val newBuildDir: Directory =
-    rootProject.layout.buildDirectory
-        .dir("../../build")
-        .get()
-rootProject.layout.buildDirectory.value(newBuildDir)
-
+// Keep root script minimal to avoid evaluation-time dependencies on Android plugin types
 subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-    project.layout.buildDirectory.value(newSubprojectBuildDir)
-}
-
-subprojects {
+    // Ensure :app is evaluated when needed
     project.evaluationDependsOn(":app")
-}
 
-// Use guarded plugin configuration so types are only accessed when plugin is applied
-subprojects {
     afterEvaluate {
+        // Configure Android compile options only when the plugin is applied
         plugins.withId("com.android.application") {
             extensions.findByType(com.android.build.gradle.BaseExtension::class.java)?.apply {
                 compileOptions {
@@ -54,7 +41,7 @@ subprojects {
             }
         }
 
-        // Configure Kotlin compile tasks (guarded)
+        // Configure Kotlin compile tasks when available
         tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).configureEach {
             kotlinOptions {
                 jvmTarget = "17"
@@ -64,5 +51,5 @@ subprojects {
 }
 
 tasks.register<Delete>("clean") {
-    delete(rootProject.layout.buildDirectory)
+    delete(rootProject.buildDir)
 }
